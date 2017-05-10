@@ -2,6 +2,7 @@ require("bundler/setup")
 Bundler.require(:default)
 require('pry')
 
+
 Dir[File.dirname(__FILE__) + '/lib/*.rb'].each { |file| require file }
 
 get("/") do
@@ -32,31 +33,29 @@ end
 
 get("/employees/:id") do
   @employee = Employee.find(params.fetch("id").to_i())
-  if @employee.project_id
-    @project = Project.find(@employee.project_id)
-  else
-    @project = nil
-  end
-  @projects = Project.all
+  @projects = @employee.projects
+  @list_projects = Project.all
   erb(:employee)
 end
 
 get("/projects/:id") do
   @project = Project.find(params.fetch("id").to_i())
-  @employees = Employee.all
+  @employees = @project.employees
+  @list_employees = Employee.all
   erb(:project)
 end
 
-patch("/employees/:id") do
+post("/employees/:id") do
   project_id = params.fetch("project_id").to_i()
   @employee = Employee.find(params.fetch("id").to_i())
-  @employee.update({:project_id => project_id})
+  @project = Project.find(project_id)
+  @employee.projects << @project
   redirect back
 end
 
-patch("/projects/:id") do
+post("/projects/:id") do
   employee = Employee.find(params.fetch("employee_id").to_i())
   @project = Project.find(params.fetch("id").to_i())
-  @project.employees.push(employee)
+  Assignment.create({:project_id => @project.id, :employee_id => employee.id})
   redirect back
 end
